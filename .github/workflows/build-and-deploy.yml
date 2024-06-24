@@ -1,0 +1,45 @@
+name: Build & Deploy
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build_deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Use repo
+        uses: actions/checkout@v4
+
+      - name: Use PNPM & install
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+          run_install: true
+
+      - name: Build Astro
+        run: |
+          pnpm i --engine-strict
+          pnpm run build
+
+      - name: SSH SCP SSH
+        uses: cross-the-world/ssh-scp-ssh-pipelines@latest
+        env:
+          PROJECT_ROOT: ${{ secrets.PROD_PROJECT_ROOT }}
+        with:
+          host: ${{ secrets.PROD_SSH_HOST }}
+          user: ${{ secrets.PROD_SSH_USER }}
+          pass: ${{ secrets.PROD_SSH_PASS }}
+          port: ${{ secrets.PROD_SSH_PORT }}
+          connect_timeout: 5s
+          first_ssh: |
+            cd $PROJECT_ROOT
+            mkdir -p public_html_new
+          scp: |
+            "./public_html/*" => "$PROJECT_ROOT/public_html_new/"
+          last_ssh: |
+            cd $PROJECT_ROOT
+            mv public_html public_html_old
+            mv public_html_new public_html
+            rm -rf public_html_old
