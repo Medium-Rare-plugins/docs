@@ -4,6 +4,7 @@ import starlight from '@astrojs/starlight';
 // https://astro.build/config
 export default defineConfig({
 	publicDir: './static',
+	outDir: './public_html',
 	integrations: [
 		starlight({
 			title: 'My Docs',
